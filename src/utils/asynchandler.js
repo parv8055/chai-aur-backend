@@ -1,7 +1,7 @@
-export const asynchandler = (fn) => async (req, res, next) => {
-  try {
-    await fn(req, res, next);
-  } catch (err) {
-    next(err);
-  }
+const asynchandler = fn => {
+  return (req, res, next) => {
+    fn(req, res, next).catch(next);
+  };
 };
+
+export default asynchandler
