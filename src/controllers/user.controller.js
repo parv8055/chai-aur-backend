@@ -10,48 +10,40 @@ export const registerUser = asynchandler(async (req, res, next) => {
 
   //some operator is a kind of or operator
   //return true is at least one field in empty
-  if (
-    [userName, fullName, email, password].some((e) => {
-      e?.trim() === "";
-    })
-  ) {
+  if ([userName, fullName, email, password].some((e) => e?.trim() === "")) {
     throw new ApiError(404, "All feild is required");
   }
-
   //some operator is a kind of or operator
   //return true is at least one field in empty
   const existedUser = await User.findOne({
     $or: [{ userName }, { email }],
   });
-
+  
   if (existedUser) {
     throw new ApiError(409, "User with eamil or username exists");
   }
-
   const avatarLocalPath = req.files?.avatar[0]?.path;
   const coverImageLocalPath = req.files?.coverImage[0]?.path;
-  if (!avatarLocalPath) {
-    throw new ApiError(400, "Avatar file is required");
-  }
-
+  
   const avatar = await uploadOnCloudinary(avatarLocalPath);
   const coverImage = await uploadOnCloudinary(coverImageLocalPath);
-
+  
   if (!avatar) {
     throw new ApiError(400, "Avatar file is required");
   }
-
+  
+  // return
   const user = await User.create({
     userName: userName.toLowerCase(),
     fullName,
     email,
     password,
-    avatar: avatar.url,
-    coverImage: coverImage?.url || "",
+    avatar: avatar.secure_url,
+    coverImage: coverImage?.secure_url || "",
   });
 
   const createdUser = await User.findById(user._id).select(
-    "-password -refreshToken"
+    "-password -refreshToken -__v"
   );
   if (!createdUser) {
     throw new ApiError(500, "something went wrong while registering the user");
